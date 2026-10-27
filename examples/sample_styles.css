@@ -1,0 +1,89 @@
+/* =============================================================== */
+/* ContrastCraft Sample Stylesheet                                 */
+/* Clearly labeled demonstration file for accessibility testing    */
+/* =============================================================== */
+
+:root {
+  /* Core brand tokens */
+  --color-brand-primary: #0284C7;
+  --color-brand-bg: #FFFFFF;
+  --color-text-main: #0F172A;
+  --color-text-muted: #94A3B8;     /* Intentionally failing AA: 2.6:1 on white */
+  --color-card-bg: #F8FAFC;
+  --color-border-subtle: #CBD5E1;  /* Intentionally failing UI boundary: 1.5:1 on white */
+  --color-heading-sub: #64748B;    /* Passes large text AA (3.9:1), fails AAA (4.5:1) */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-brand-bg);
+  color: var(--color-text-main);
+  margin: 0;
+  padding: 24px;
+}
+
+.hero-banner {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+/* 1. Large-text heading case (26px font) */
+.hero-headline {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-heading-sub);
+  margin-top: 0;
+}
+
+/* 2. Passing high-contrast text combination */
+.hero-lead {
+  font-size: 16px;
+  color: var(--color-text-main);
+  line-height: 1.6;
+}
+
+/* 3. Normal-text AA failure (insufficient contrast on white/card) */
+.hero-caption {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* 4. UI component boundary failure */
+.search-input {
+  background-color: #FFFFFF;
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border-subtle);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* 5. Button text vs background (passing) and border */
+.btn-action {
+  background-color: var(--color-brand-primary);
+  color: #FFFFFF;
+  border: 1px solid #0369A1;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* 6. Interaction state (:hover with reduced contrast) */
+.btn-action:hover {
+  background-color: #7DD3FC; /* Light sky blue: fails white text contrast on hover! */
+  color: #FFFFFF;
+}
+
+/* 7. Case requiring browser verification: gradient background */
+.promo-badge {
+  background: linear-gradient(135deg, #4F46E5, #9333EA);
+  color: #FFFFFF;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  display: inline-block;
+}

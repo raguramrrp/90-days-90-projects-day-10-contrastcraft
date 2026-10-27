@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContrastCraft — Automated Web Accessibility Contrast Auditor</title>
+  <meta name="description" content="WCAG 2.1 & 2.2 Compliant Color Contrast & Accessibility Audit Tool with Real Calculations and Safe CSS Patches.">
+  
+  <link rel="stylesheet" href="css/tokens.css?v=1.0.4">
+  <link rel="stylesheet" href="css/main.css?v=1.0.4">
+  <link rel="stylesheet" href="css/components.css?v=1.0.4">
+</head>
+<body>
+
+  <!-- App Header / Toolbar -->
+  <header class="app-header" role="banner">
+    <div class="brand-area">
+      <div class="brand-logo-icon" aria-hidden="true">C</div>
+      <div class="brand-name">ContrastCraft</div>
+      <span class="brand-badge">WCAG 2.1 / 2.2</span>
+    </div>
+
+    <div class="header-actions">
+      <div class="scan-status-badge" role="status" aria-live="polite">
+        <span class="status-dot"></span>
+        <span class="status-text">Engine Ready</span>
+      </div>
+
+      <button id="btn-shortcuts" class="btn btn-secondary btn-sm" onclick="window.ContrastCraft && window.ContrastCraft.openModal('shortcuts-modal')" title="Keyboard Shortcuts (? or Alt+K)" aria-label="Open keyboard shortcuts">
+        <span>⌨️</span> <span>Shortcuts</span>
+      </button>
+
+      <button id="btn-theme-toggle" class="btn btn-secondary btn-sm" onclick="window.ContrastCraft && window.ContrastCraft.toggleTheme()" aria-label="Toggle dark/light theme">
+        <span class="theme-icon">🌙</span>
+        <span class="theme-label">Dark Mode</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <!-- Navigation Sidebar -->
+    <nav class="app-sidebar" role="navigation" aria-label="Primary application navigation">
+      <button class="nav-item active" data-screen="workspace" id="nav-workspace" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('workspace')">
+        <span class="nav-icon" aria-hidden="true">📥</span>
+        <span>Workspace &amp; Input</span>
+      </button>
+
+      <button class="nav-item" data-screen="findings" id="nav-findings" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('findings')">
+        <span class="nav-icon" aria-hidden="true">🔍</span>
+        <span>Audit Findings</span>
+        <span id="nav-fail-count" class="nav-badge" style="display: none;">0</span>
+      </button>
+
+      <button class="nav-item" data-screen="fix-studio" id="nav-fix-studio" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('fix-studio')">
+        <span class="nav-icon" aria-hidden="true">🎨</span>
+        <span>Fix Studio &amp; Preview</span>
+      </button>
+
+      <button class="nav-item" data-screen="tokens" id="nav-tokens" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('tokens')">
+        <span class="nav-icon" aria-hidden="true">🏷️</span>
+        <span>Design Tokens</span>
+      </button>
+
+      <button class="nav-item" data-screen="sessions" id="nav-sessions" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('sessions')">
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>Sessions &amp; Reports</span>
+      </button>
+    </nav>
+
+    <!-- Main Workspace Content Area -->
+    <main class="app-content" role="main">
+
+      <!-- Overall Session Statistics Bar -->
+      <section class="stats-overview" aria-label="Audit summary statistics">
+        <div class="stat-box">
+          <div class="stat-header">
+            <span class="stat-title">Compliance Score</span>
+            <span class="badge badge-pill badge-info">WCAG AA</span>
+          </div>
+          <div id="stat-score" class="stat-value" style="color: var(--cc-primary);">0%</div>
+          <div class="stat-subtitle">Based on verified criteria</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-header">
+            <span class="stat-title">Analyzed Elements</span>
+          </div>
+          <div id="stat-total" class="stat-value">0</div>
+          <div class="stat-subtitle">Nodes &amp; UI boundaries</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-header">
+            <span class="stat-title">Level AA Passes</span>
+          </div>
+          <div id="stat-pass-aa" class="stat-value" style="color: var(--cc-pass-text);">0</div>
+          <div class="stat-subtitle">&ge; 4.5:1 text / 3.0:1 UI</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-header">
+            <span class="stat-title">Level AA Failures</span>
+          </div>
+          <div id="stat-fail-aa" class="stat-value" style="color: var(--cc-fail-text);">0</div>
+          <div class="stat-subtitle">Requires remediation</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-header">
+            <span class="stat-title">Level AAA Passes</span>
+          </div>
+          <div id="stat-pass-aaa" class="stat-value">0</div>
+          <div class="stat-subtitle">&ge; 7.0:1 enhanced</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-header">
+            <span class="stat-title">Needs Verification</span>
+          </div>
+          <div id="stat-unresolved" class="stat-value" style="color: var(--cc-warn-text);">0</div>
+          <div class="stat-subtitle">Gradients &amp; dynamic</div>
+        </div>
+      </section>
+
+      <!-- SCREEN 1: WORKSPACE & INPUT -->
+      <section id="screen-workspace" class="screen-panel active" aria-labelledby="heading-workspace">
+        <div class="card">
+          <div class="card-header">
+            <h2 id="heading-workspace" class="card-title">Accessibility Audit Workspace</h2>
+            <div style="display:flex;gap:8px;">
+              <button id="btn-load-sample" class="btn btn-secondary btn-sm" onclick="window.ContrastCraft && window.ContrastCraft.handleLoadSample()" title="Load sample portfolio with known passes & failures">
+                <span>📁</span> Load Sample Showcase
+              </button>
+              <button id="btn-run-audit" class="btn btn-primary" onclick="window.ContrastCraft && window.ContrastCraft.handleRunAudit()" title="Analyze accessibility (Alt+A)">
+                <span>⚡</span> Run Contrast Audit
+              </button>
+            </div>
+          </div>
+
+          <!-- Input Source Tabs -->
+          <div class="tab-nav" role="tablist">
+            <button class="tab-btn input-tab-btn active" data-tab="paste" role="tab">Paste HTML &amp; CSS</button>
+            <button class="tab-btn input-tab-btn" data-tab="upload" role="tab">Upload HTML/CSS Files</button>
+            <button class="tab-btn input-tab-btn" data-tab="folder" role="tab">Analyze Local Project Folder</button>
+          </div>
+
+          <!-- Tab Pane: Paste -->
+          <div id="tab-pane-paste" class="input-tab-pane">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-group">
+                <label for="input-html" class="form-label">HTML Markup (including inline styles)</label>
+                <textarea id="input-html" class="code-editor" placeholder="<header class='banner'>&#10;  <h1 style='color: #0F172A;'>Hello World</h1>&#10;</header>"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="input-css" class="form-label">CSS Stylesheet Declarations &amp; Custom Properties</label>
+                <textarea id="input-css" class="code-editor" placeholder=":root {&#10;  --primary: #0284C7;&#10;  --text-muted: #94A3B8;&#10;}&#10;.banner { background: #FFFFFF; }"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Pane: Upload -->
+          <div id="tab-pane-upload" class="input-tab-pane" style="display: none;">
+            <div id="file-dropzone" class="dropzone" role="button" tabindex="0">
+              <div style="font-size:2.5rem;margin-bottom:12px;">📄</div>
+              <h3 style="margin:0 0 6px 0;font-size:1.1rem;">Click to upload or drag &amp; drop HTML and CSS files</h3>
+              <p style="color:var(--cc-text-muted);font-size:0.85rem;margin:0;">Supports .html, .htm, and .css files up to 5MB.</p>
+              <input type="file" id="file-input" multiple accept=".html,.htm,.css" style="display:none;">
+            </div>
+            <div id="upload-file-summary" style="margin-top:12px;font-size:0.85rem;color:var(--cc-text-muted);"></div>
+          </div>
+
+          <!-- Tab Pane: Local Folder Scanner -->
+          <div id="tab-pane-folder" class="input-tab-pane" style="display: none;">
+            <div class="form-group">
+              <label for="input-folder-path" class="form-label">Local Project Folder Path</label>
+              <input type="text" id="input-folder-path" class="form-input" placeholder="e.g. D:\my-web-project or .\examples">
+              <div style="font-size:0.75rem;color:var(--cc-text-muted);margin-top:4px;">
+                Restricted to the selected folder. Excludes node_modules, .git, dist, build, and .venv by default.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: AUDIT FINDINGS -->
+      <section id="screen-findings" class="screen-panel" aria-labelledby="heading-findings">
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;">
+          
+          <!-- Findings Table Column -->
+          <div class="card" style="margin-bottom:0;">
+            <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+              <h2 id="heading-findings" class="card-title">WCAG Audit Findings</h2>
+              
+              <!-- Search & Filters -->
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <input type="search" id="findings-search" class="form-input" placeholder="Search selector, text, color... (Alt+S)" style="width:220px;padding:6px 12px;font-size:0.85rem;">
+                
+                <select id="findings-sort" class="form-input" style="width:160px;padding:6px 10px;font-size:0.85rem;">
+                  <option value="severity">Sort by Severity</option>
+                  <option value="ratio_asc">Ratio: Lowest First</option>
+                  <option value="ratio_desc">Ratio: Highest First</option>
+                  <option value="line">Line Number</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Filter Pills -->
+            <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm filter-pill active" data-filter="all">All Findings</button>
+              <button class="btn btn-secondary btn-sm filter-pill" data-filter="fail_aa">AA Failures</button>
+              <button class="btn btn-secondary btn-sm filter-pill" data-filter="pass_aa">AA Passes</button>
+              <button class="btn btn-secondary btn-sm filter-pill" data-filter="fail_aaa">AAA Failures</button>
+              <button class="btn btn-secondary btn-sm filter-pill" data-filter="fail_non_text">UI Boundary Failures</button>
+              <button class="btn btn-secondary btn-sm filter-pill" data-filter="verify">Needs Verification</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="cc-table" aria-label="Contrast findings list">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Element / Context</th>
+                    <th>Colors</th>
+                    <th>Ratio</th>
+                    <th>Criterion</th>
+                    <th>Confidence</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="findings-tbody">
+                  <tr>
+                    <td colspan="7" style="text-align:center;padding:32px;color:var(--cc-text-muted);">
+                      No active audit. Run an audit from the Workspace screen to evaluate contrast.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Inspector Drawer Column -->
+          <div class="card" style="margin-bottom:0;">
+            <div class="card-header">
+              <h3 class="card-title" style="font-size:1rem;">Finding Inspector</h3>
+            </div>
+            <div id="inspector-content">
+              <div style="text-align:center;padding:32px 12px;color:var(--cc-text-muted);font-size:0.85rem;">
+                Select a finding from the table to inspect calculated luminance, hierarchy, and applicable WCAG thresholds.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: FIX STUDIO & PREVIEW -->
+      <section id="screen-fix-studio" class="screen-panel" aria-labelledby="heading-fix-studio">
+        <!-- Target Banner -->
+        <div class="card" style="margin-bottom:16px;background:var(--cc-surface-subtle);padding:14px 20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:0.75rem;text-transform:uppercase;color:var(--cc-text-muted);font-weight:700;">Remediation Target</div>
+              <h3 id="fix-target-selector" style="margin:2px 0 0 0;font-size:1.15rem;font-family:var(--cc-font-mono);">No Element Selected</h3>
+              <div id="fix-target-role" style="font-size:0.8rem;color:var(--cc-text-muted);">Select a failing element from Findings or load the sample</div>
+            </div>
+            <div style="display:flex;gap:16px;align-items:center;">
+              <div>
+                <div style="font-size:0.72rem;color:var(--cc-text-muted);">Current Ratio</div>
+                <div id="fix-current-ratio" style="font-size:1.2rem;font-weight:800;color:var(--cc-fail-text);">N/A</div>
+              </div>
+              <div style="font-size:1.2rem;color:var(--cc-text-muted);">&rarr;</div>
+              <div>
+                <div style="font-size:0.72rem;color:var(--cc-text-muted);">Target Threshold</div>
+                <div id="fix-target-req" style="font-size:1.2rem;font-weight:800;">4.5:1</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual Before / After Metric Comparison Strip -->
+          <div class="before-after-strip">
+            <div class="ba-col original">
+              <span class="ba-label">Original Baseline</span>
+              <div class="ba-row">
+                <span id="ba-orig-swatch" class="color-swatch" style="background:#94a3b8;width:20px;height:20px;"></span>
+                <code id="ba-orig-hex" style="font-size:0.85rem;font-weight:700;">#94A3B8</code>
+                <span id="ba-orig-ratio" class="badge badge-fail" style="font-size:0.78rem;">2.60:1 FAIL</span>
+                <span id="ba-orig-apca" class="badge badge-pill" style="font-size:0.72rem;">APCA Lc -38.2</span>
+              </div>
+            </div>
+            <div class="ba-arrow">
+              <span id="ba-gain-badge" class="badge badge-pill badge-info" style="font-size:0.72rem;">+2.02:1 Gain</span>
+              <span>➔</span>
+            </div>
+            <div class="ba-col patched">
+              <span class="ba-label">Remediated Target</span>
+              <div class="ba-row">
+                <span id="ba-patch-swatch" class="color-swatch" style="background:#596a82;width:20px;height:20px;"></span>
+                <code id="ba-patch-hex" style="font-size:0.85rem;font-weight:700;">#596A82</code>
+                <span id="ba-patch-ratio" class="badge badge-pass" style="font-size:0.78rem;">4.62:1 PASS</span>
+                <span id="ba-patch-apca" class="badge badge-pill" style="font-size:0.72rem;">APCA Lc 64.8</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <!-- Left Column: Recommendations, Tuner & Diff -->
+          <div>
+            <!-- Automated Color Recommendations -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <h3 class="card-title" style="font-size:1rem;">Verified Hue-Preserving Recommendations</h3>
+              </div>
+              <div id="fix-suggestions-grid" style="display:grid;grid-template-columns:1fr;gap:10px;">
+                <div style="color:var(--cc-text-muted);font-size:0.85rem;">Select an element from the findings table to compute verified color fixes.</div>
+              </div>
+            </div>
+
+            <!-- Interactive Color Tuner & Real-Time Tester -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <h3 class="card-title" style="font-size:1rem;">🎨 Interactive Color Tuner &amp; Real-Time Tester</h3>
+                <span id="tuner-status-badge" class="badge badge-pass" style="font-size:0.75rem;">4.62:1 PASS</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <label for="tuner-hex-input" style="font-size:0.8rem;font-weight:600;">Custom Alternative Color</label>
+                    <span id="tuner-apca-badge" class="badge badge-pill" style="font-size:0.7rem;">APCA Lc 64.8</span>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:center;">
+                    <input type="color" id="tuner-color-picker" value="#596a82" style="width:42px;height:38px;padding:2px;border:1px solid var(--cc-border);border-radius:var(--cc-radius-md);cursor:pointer;" aria-label="Color picker">
+                    <input type="text" id="tuner-hex-input" class="form-input" value="#596A82" style="font-family:var(--cc-font-mono);font-size:0.9rem;text-transform:uppercase;" aria-label="Hex color value">
+                  </div>
+                </div>
+
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <label for="tuner-lightness-slider" style="font-size:0.8rem;color:var(--cc-text-muted);">Adjust Lightness (&Delta;L): <strong id="tuner-lightness-val" style="color:var(--cc-text-primary);">-21%</strong></label>
+                    <button id="btn-tuner-reset" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:0.75rem;">Reset</button>
+                  </div>
+                  <input type="range" id="tuner-lightness-slider" min="-60" max="60" value="-21" step="1" style="width:100%;accent-color:var(--cc-primary);cursor:pointer;" aria-label="Lightness adjustment slider">
+                </div>
+
+                <div style="display:flex;gap:8px;">
+                  <button id="btn-copy-css-rule" class="btn btn-secondary btn-sm" style="flex:1;" title="Copy CSS declaration to clipboard">
+                    <span>📋</span> Copy CSS
+                  </button>
+                  <button id="btn-apply-tuned-color" class="btn btn-primary btn-sm" style="flex:1;" title="Apply this color as the proposed patch">
+                    <span>⚡</span> Use This Color
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Typography & Component Sizing Strategy -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title" style="font-size:1rem;">📐 Typography &amp; Component Sizing Strategy</h3>
+                  <div style="font-size:0.75rem;color:var(--cc-text-muted);margin-top:2px;">Adjust font or button geometry to satisfy WCAG without forced darkening</div>
+                </div>
+              </div>
+              <div>
+                <div class="sizing-strategy-card" id="btn-strategy-large-text" title="Promote to large text to lower WCAG requirement to 3.0:1">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <strong style="font-size:0.85rem;">🔤 Promote to WCAG Large Text</strong>
+                    <span class="badge badge-pill badge-info">Target: 3.0:1</span>
+                  </div>
+                  <p style="font-size:0.78rem;color:var(--cc-text-muted);margin:4px 0 0 0;line-height:1.4;">
+                    Bumps font size to 19px Bold (or 24px Regular). In WCAG 1.4.3, large text requires only <strong>3.0:1</strong> instead of <strong>4.5:1</strong>.
+                  </p>
+                </div>
+
+                <div class="sizing-strategy-card" id="btn-strategy-button-target" title="Optimize button touch targets and focus rings for WCAG 2.5.5">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <strong style="font-size:0.85rem;">🔘 Polish Button Touch Target &amp; Focus Ring</strong>
+                    <span class="badge badge-pill badge-info">WCAG 2.5.5</span>
+                  </div>
+                  <p style="font-size:0.78rem;color:var(--cc-text-muted);margin:4px 0 0 0;line-height:1.4;">
+                    Enforces minimum 44&times;44px touch boundary, 12px 22px padding, 8px radius, and a 2px active focus ring.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Whole-Page Accessible Theme Harmonizer -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title" style="font-size:1rem;">🌟 Cohesive Accessible Theme Harmonizer</h3>
+                  <div style="font-size:0.75rem;color:var(--cc-text-muted);margin-top:2px;">Fix all colors website-wide with a professionally curated accessible palette</div>
+                </div>
+              </div>
+              <div class="theme-harmonizer-grid">
+                <div class="theme-card" data-theme-id="modern_indigo">
+                  <div style="font-weight:700;font-size:0.85rem;">💼 Modern Indigo</div>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#4F46E5;"></span>
+                    <span class="theme-swatch" style="background:#0F172A;"></span>
+                    <span class="theme-swatch" style="background:#475569;"></span>
+                    <span class="theme-swatch" style="background:#F8FAFC;"></span>
+                  </div>
+                  <div style="font-size:0.7rem;color:var(--cc-text-muted);">Executive SaaS aesthetic</div>
+                </div>
+
+                <div class="theme-card" data-theme-id="emerald_fintech">
+                  <div style="font-weight:700;font-size:0.85rem;">🌿 Emerald Fintech</div>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#059669;"></span>
+                    <span class="theme-swatch" style="background:#064E3B;"></span>
+                    <span class="theme-swatch" style="background:#047857;"></span>
+                    <span class="theme-swatch" style="background:#ECFDF5;"></span>
+                  </div>
+                  <div style="font-size:0.7rem;color:var(--cc-text-muted);">Fresh, clean, high trust</div>
+                </div>
+
+                <div class="theme-card" data-theme-id="warm_editorial">
+                  <div style="font-weight:700;font-size:0.85rem;">☕ Warm Editorial</div>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#B45309;"></span>
+                    <span class="theme-swatch" style="background:#271D15;"></span>
+                    <span class="theme-swatch" style="background:#78350F;"></span>
+                    <span class="theme-swatch" style="background:#FAF7F2;"></span>
+                  </div>
+                  <div style="font-size:0.7rem;color:var(--cc-text-muted);">Warm parchment &amp; espresso</div>
+                </div>
+
+                <div class="theme-card" data-theme-id="cyber_obsidian">
+                  <div style="font-weight:700;font-size:0.85rem;">🌌 Cyber Obsidian</div>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#38BDF8;"></span>
+                    <span class="theme-swatch" style="background:#F8FAFC;"></span>
+                    <span class="theme-swatch" style="background:#94A3B8;"></span>
+                    <span class="theme-swatch" style="background:#0F172A;"></span>
+                  </div>
+                  <div style="font-size:0.7rem;color:var(--cc-text-muted);">Deep space high contrast</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CSS Patch Diff Preview -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title" style="font-size:1rem;">Targeted CSS Patch Diff</h3>
+                <div style="display:flex;gap:6px;">
+                  <button id="btn-export-patch-file" class="btn btn-secondary btn-sm" title="Download .diff patch file">
+                    <span>💾</span> Export .diff
+                  </button>
+                  <button id="btn-apply-patch" class="btn btn-primary btn-sm" title="Apply to working copy with explicit approval">
+                    <span>✨</span> Apply Patch
+                  </button>
+                </div>
+              </div>
+              <div id="patch-diff-container">
+                <div class="diff-viewer">
+                  <div class="diff-line header">Select an alternative color above to generate unified CSS diff.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Live Isolated Preview Suite -->
+          <div class="preview-container">
+            <div class="preview-toolbar">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-primary btn-preview-mode" data-mode="split" title="Side-by-side comparison of original vs fixed">⚡ Side-by-Side</button>
+                <button class="btn btn-sm btn-secondary btn-preview-mode" data-mode="patched" title="View remediated version only">Proposed Fix</button>
+                <button class="btn btn-sm btn-secondary btn-preview-mode" data-mode="original" title="View original baseline only">Original</button>
+              </div>
+
+              <!-- Color Blindness Simulator -->
+              <div style="display:flex;align-items:center;gap:6px;">
+                <label for="select-vision-sim" style="font-size:0.75rem;color:var(--cc-text-muted);font-weight:600;">Vision:</label>
+                <select id="select-vision-sim" class="form-input" style="padding:4px 8px;font-size:0.8rem;height:auto;width:auto;" aria-label="Color blindness simulator">
+                  <option value="normal">👁️ Normal Vision</option>
+                  <option value="protanopia">🔴 Protanopia (Red-Blind)</option>
+                  <option value="deuteranopia">🟢 Deuteranopia (Green-Blind)</option>
+                  <option value="tritanopia">🔵 Tritanopia (Blue-Blind)</option>
+                  <option value="achromatopsia">⚫ Achromatopsia (Grayscale)</option>
+                </select>
+              </div>
+
+              <!-- Viewport Width Controls -->
+              <div class="preview-viewport-controls">
+                <button class="btn btn-secondary btn-sm btn-viewport" data-width="375px" title="Mobile view (375px)">📱 Mobile</button>
+                <button class="btn btn-secondary btn-sm btn-viewport" data-width="768px" title="Tablet view (768px)">📟 Tablet</button>
+                <button class="btn btn-secondary btn-sm btn-viewport active" data-width="100%" title="Full width">🖥️ Full</button>
+              </div>
+            </div>
+
+            <div class="preview-frame-wrap" id="preview-frame-wrap">
+              <!-- Dual Split Frame -->
+              <div class="preview-split-grid" id="preview-split-grid">
+                <!-- Original Pane -->
+                <div class="preview-pane" id="preview-pane-original">
+                  <div class="preview-pane-header orig-header">
+                    <span>🔴 Original Baseline</span>
+                    <span id="split-orig-badge" class="badge badge-fail" style="font-size:0.72rem;">2.60:1 FAIL</span>
+                  </div>
+                  <iframe id="preview-iframe-original" sandbox="allow-same-origin allow-scripts" title="Original baseline design preview"></iframe>
+                </div>
+
+                <!-- Patched Pane -->
+                <div class="preview-pane" id="preview-pane-patched">
+                  <div class="preview-pane-header patch-header">
+                    <span>🟢 Remediated Fix</span>
+                    <span id="split-patch-badge" class="badge badge-pass" style="font-size:0.72rem;">4.62:1 PASS</span>
+                  </div>
+                  <iframe id="preview-iframe-patched" sandbox="allow-same-origin allow-scripts" title="Remediated accessible design preview"></iframe>
+                </div>
+              </div>
+
+              <!-- Hidden backwards compatibility iframe -->
+              <iframe id="preview-iframe" style="display:none;" sandbox="allow-same-origin allow-scripts" title="Preview iframe fallback"></iframe>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: DESIGN TOKENS INVENTORY -->
+      <section id="screen-tokens" class="screen-panel" aria-labelledby="heading-tokens">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 id="heading-tokens" class="card-title">CSS Design Token &amp; Custom Property Inventory</h2>
+              <div style="font-size:0.8rem;color:var(--cc-text-muted);margin-top:2px;">
+                Audits design variables, usage frequency, associated contrast failures, and suggested token-level updates.
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="cc-table" aria-label="Design tokens table">
+              <thead>
+                <tr>
+                  <th>Token Name</th>
+                  <th>Declared Value</th>
+                  <th>Resolved Swatch</th>
+                  <th>Usage Count</th>
+                  <th>Contrast Failures</th>
+                  <th>Proposed Token Value</th>
+                </tr>
+              </thead>
+              <tbody id="tokens-tbody">
+                <tr>
+                  <td colspan="6" style="text-align:center;padding:24px;color:var(--cc-text-muted);">
+                    No audit active. Load a project or sample to inventory CSS custom properties.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: SESSIONS & REPORTS -->
+      <section id="screen-sessions" class="screen-panel" aria-labelledby="heading-sessions">
+        <!-- Export Actions Banner -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <h2 id="heading-sessions" class="card-title">Reports &amp; Data Export</h2>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button id="btn-save-session-trigger" class="btn btn-primary">
+              <span>💾</span> Save Current Audit Session
+            </button>
+            <button id="btn-export-html" class="btn btn-secondary">
+              <span>📑</span> Download Standalone HTML Report
+            </button>
+            <button id="btn-export-json" class="btn btn-secondary">
+              <span>📦</span> Download JSON Audit Data
+            </button>
+            <button id="btn-export-css" class="btn btn-secondary">
+              <span>🎨</span> Download Corrected CSS
+            </button>
+          </div>
+        </div>
+
+        <!-- Saved Sessions History -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Saved Local Audit Sessions (SQLite)</h3>
+          </div>
+          <div id="sessions-list-container">
+            <div style="text-align:center;padding:24px;color:var(--cc-text-muted);">Loading saved sessions...</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: Patch Confirmation (Explicit Safety Requirement) -->
+  <div id="patch-confirm-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="patch-modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="patch-modal-title" class="modal-title">Explicit Patch Confirmation</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem;line-height:1.5;">
+          You are about to apply the proposed CSS patch to your working copy.
+        </p>
+        <div class="badge badge-warn" style="display:block;padding:10px;margin-bottom:14px;line-height:1.4;">
+          ⚠️ <strong>Non-destructive Guarantee:</strong> ContrastCraft never overwrites unrelated CSS rules. A re-analysis will be automatically executed to measure and verify contrast improvements.
+        </div>
+        <p style="font-size:0.85rem;color:var(--cc-text-muted);">
+          Do you authorize applying these changes to your working copy?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close-btn">Cancel</button>
+        <button id="btn-confirm-apply-patch" class="btn btn-primary">Yes, Authorize &amp; Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Keyboard Shortcuts Reference -->
+  <div id="shortcuts-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="shortcuts-modal-title" class="modal-title">Keyboard Navigation &amp; Shortcuts</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table class="cc-table">
+          <thead>
+            <tr><th>Shortcut</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Alt + A</code></td><td>Run Accessibility Audit</td></tr>
+            <tr><td><code>Alt + 1</code></td><td>Switch to Workspace &amp; Input</td></tr>
+            <tr><td><code>Alt + 2</code></td><td>Switch to Audit Findings</td></tr>
+            <tr><td><code>Alt + 3</code></td><td>Switch to Fix Studio &amp; Preview</td></tr>
+            <tr><td><code>Alt + 4</code></td><td>Switch to Design Tokens</td></tr>
+            <tr><td><code>Alt + 5</code></td><td>Switch to Sessions &amp; Reports</td></tr>
+            <tr><td><code>Alt + T</code></td><td>Toggle Dark / Light Theme</td></tr>
+            <tr><td><code>Alt + S</code></td><td>Focus Search Input</td></tr>
+            <tr><td><code>Escape</code></td><td>Dismiss Dialogs / Close Inspector</td></tr>
+            <tr><td><code>?</code></td><td>Show this Shortcuts Help</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary modal-close-btn">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.bundle.js?v=1.0.4"></script>
+</body>
+</html>

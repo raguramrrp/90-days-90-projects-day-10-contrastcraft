@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContrastCraft Showcase — Sample Portfolio & Landing Page</title>
+  <link rel="stylesheet" href="sample_styles.css">
+  <style>
+    /* Inline styles for demonstration */
+    .quick-stat {
+      display: inline-block;
+      margin-right: 16px;
+      font-size: 13px;
+      color: #64748B;
+    }
+  </style>
+</head>
+<body>
+  <!-- =============================================================== -->
+  <!-- DEMONSTRATION SAMPLE DATA ONLY — Clearly labeled for tests       -->
+  <!-- =============================================================== -->
+
+  <header class="hero-banner">
+    <span class="promo-badge">Sample Portfolio Demo</span>
+    <h1 class="hero-headline">AI Developer Portfolio &amp; Engineering Showcase</h1>
+    <p class="hero-lead">
+      Building full-stack, autonomous software systems with high standards for security,
+      reliability, and digital accessibility compliance.
+    </p>
+    <p class="hero-caption">
+      Note: This subtitle demonstrates an intentional WCAG Level AA normal-text contrast failure.
+    </p>
+
+    <div style="margin-top: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <input type="text" class="search-input" placeholder="Search project case studies..." aria-label="Search projects">
+      <button class="btn-action" type="button">Explore Challenge</button>
+      <a href="#details" style="color: #0284C7; font-weight: 600; text-decoration: underline;">View Audit Findings</a>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <span class="quick-stat">Status: Active Development</span>
+      <span class="quick-stat">Standard: WCAG 2.1 / 2.2 Level AA &amp; AAA</span>
+    </div>
+  </header>
+
+  <main id="details">
+    <section style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px;">
+      <h2 style="font-size: 20px; color: #0F172A; margin-top: 0;">Automated Accessibility Verification</h2>
+      <p style="color: #334155; line-height: 1.6;">
+        Every user interface element should provide discernible visual contrast against its surrounding background.
+        ContrastCraft evaluates both foreground text and component boundaries to safeguard universal usability.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

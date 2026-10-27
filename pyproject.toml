@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "contrastcraft"
+version = "1.0.0"
+description = "Automated Web Accessibility Contrast Auditor (WCAG 2.1 & 2.2 Level AA / AAA)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Ragu Ram P", email = "developer@example.com" }
+]
+keywords = [
+  "accessibility",
+  "a11y",
+  "wcag",
+  "contrast",
+  "color-contrast",
+  "developer-tools",
+  "fastapi",
+  "audit"
+]
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn>=0.30.0",
+  "pydantic>=2.8.0",
+  "python-multipart>=0.0.9"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "httpx>=0.27.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

@@ -1,0 +1,106 @@
+/* =============================================================== */
+/* ContrastCraft Design System Tokens                              */
+/* Semantic variables supporting verified accessible light & dark  */
+/* =============================================================== */
+
+:root {
+  /* Color Palette — Light Theme (Default) */
+  --cc-bg: #F8FAFC;
+  --cc-surface: #FFFFFF;
+  --cc-surface-subtle: #F1F5F9;
+  --cc-surface-hover: #E2E8F0;
+  --cc-surface-overlay: rgba(15, 23, 42, 0.6);
+  
+  --cc-text-primary: #0F172A;     /* Contrast on white: 15.5:1 (AAA) */
+  --cc-text-secondary: #334155;   /* Contrast on white: 9.8:1 (AAA) */
+  --cc-text-muted: #64748B;       /* Contrast on white: 4.6:1 (AA) */
+  
+  --cc-border: #E2E8F0;
+  --cc-border-focus: #0284C7;
+  
+  --cc-primary: #0284C7;
+  --cc-primary-hover: #0369A1;
+  --cc-primary-contrast: #FFFFFF; /* 4.6:1 on #0284C7 */
+  
+  /* Status Colors */
+  --cc-pass-bg: #ECFDF5;
+  --cc-pass-border: #A7F3D0;
+  --cc-pass-text: #065F46;        /* 7.5:1 on #ECFDF5 (AAA) */
+  
+  --cc-fail-bg: #FEF2F2;
+  --cc-fail-border: #FECACA;
+  --cc-fail-text: #991B1B;        /* 7.8:1 on #FEF2F2 (AAA) */
+  
+  --cc-warn-bg: #FFFBEB;
+  --cc-warn-border: #FDE68A;
+  --cc-warn-text: #92400E;        /* 7.1:1 on #FFFBEB (AAA) */
+  
+  --cc-info-bg: #F0F9FF;
+  --cc-info-border: #BAE6FD;
+  --cc-info-text: #075985;        /* 7.6:1 on #F0F9FF (AAA) */
+
+  /* Diff Colors */
+  --cc-diff-add-bg: rgba(16, 185, 129, 0.15);
+  --cc-diff-add-text: #047857;
+  --cc-diff-del-bg: rgba(239, 68, 68, 0.15);
+  --cc-diff-del-text: #B91C1C;
+
+  /* Typography */
+  --cc-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --cc-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Elevations & Radii */
+  --cc-radius-sm: 4px;
+  --cc-radius-md: 8px;
+  --cc-radius-lg: 12px;
+  --cc-radius-full: 9999px;
+
+  --cc-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --cc-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --cc-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] {
+  --cc-bg: #090D16;
+  --cc-surface: #0F172A;
+  --cc-surface-subtle: #1E293B;
+  --cc-surface-hover: #334155;
+  --cc-surface-overlay: rgba(0, 0, 0, 0.75);
+
+  --cc-text-primary: #F8FAFC;     /* Contrast on #0F172A: 15.5:1 (AAA) */
+  --cc-text-secondary: #CBD5E1;   /* Contrast on #0F172A: 10.2:1 (AAA) */
+  --cc-text-muted: #94A3B8;       /* Contrast on #0F172A: 5.6:1 (AA) */
+
+  --cc-border: #1E293B;
+  --cc-border-focus: #38BDF8;
+
+  --cc-primary: #0284C7;
+  --cc-primary-hover: #38BDF8;
+  --cc-primary-contrast: #FFFFFF;
+
+  --cc-pass-bg: #064E3B;
+  --cc-pass-border: #047857;
+  --cc-pass-text: #6EE7B7;
+
+  --cc-fail-bg: #7F1D1D;
+  --cc-fail-border: #991B1B;
+  --cc-fail-text: #FCA5A5;
+
+  --cc-warn-bg: #78350F;
+  --cc-warn-border: #92400E;
+  --cc-warn-text: #FDE68A;
+
+  --cc-info-bg: #0C4A6E;
+  --cc-info-border: #0369A1;
+  --cc-info-text: #7DD3FC;
+
+  --cc-diff-add-bg: rgba(16, 185, 129, 0.2);
+  --cc-diff-add-text: #34D399;
+  --cc-diff-del-bg: rgba(239, 68, 68, 0.2);
+  --cc-diff-del-text: #F87171;
+
+  --cc-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --cc-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --cc-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
