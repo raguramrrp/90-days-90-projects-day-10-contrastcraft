@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ContrastCraft — Automated Web Accessibility Contrast Auditor</title>
-  <meta name="description" content="WCAG 2.1 & 2.2 Compliant Color Contrast & Accessibility Audit Tool with Real Calculations and Safe CSS Patches.">
+  <meta name="description" content="WCAG 2.1 & 2.2 Compliant Color Contrast & Accessibility Audit Tool with Real Calculations, Token Intelligence, and Safe CSS Patches.">
   
-  <link rel="stylesheet" href="css/tokens.css?v=1.0.4">
-  <link rel="stylesheet" href="css/main.css?v=1.0.4">
-  <link rel="stylesheet" href="css/components.css?v=1.0.4">
+  <link rel="stylesheet" href="css/tokens.css?v=2.0.0">
+  <link rel="stylesheet" href="css/main.css?v=2.0.0">
+  <link rel="stylesheet" href="css/components.css?v=2.0.0">
 </head>
 <body>
 
@@ -16,14 +16,17 @@
   <header class="app-header" role="banner">
     <div class="brand-area">
       <div class="brand-logo-icon" aria-hidden="true">C</div>
-      <div class="brand-name">ContrastCraft</div>
+      <div>
+        <div class="brand-name">ContrastCraft</div>
+        <div style="font-size:0.7rem;color:var(--cc-text-muted);margin-top:-2px;">Web Accessibility Auditor</div>
+      </div>
       <span class="brand-badge">WCAG 2.1 / 2.2</span>
     </div>
 
     <div class="header-actions">
       <div class="scan-status-badge" role="status" aria-live="polite">
         <span class="status-dot"></span>
-        <span class="status-text">Engine Ready</span>
+        <span id="header-status-text" class="status-text">Engine Ready</span>
       </div>
 
       <button id="btn-shortcuts" class="btn btn-secondary btn-sm" onclick="window.ContrastCraft && window.ContrastCraft.openModal('shortcuts-modal')" title="Keyboard Shortcuts (? or Alt+K)" aria-label="Open keyboard shortcuts">
@@ -32,7 +35,7 @@
 
       <button id="btn-theme-toggle" class="btn btn-secondary btn-sm" onclick="window.ContrastCraft && window.ContrastCraft.toggleTheme()" aria-label="Toggle dark/light theme">
         <span class="theme-icon">🌙</span>
-        <span class="theme-label">Dark Mode</span>
+        <span class="theme-label">Dark Theme</span>
       </button>
     </div>
   </header>
@@ -43,6 +46,11 @@
       <button class="nav-item active" data-screen="workspace" id="nav-workspace" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('workspace')">
         <span class="nav-icon" aria-hidden="true">📥</span>
         <span>Workspace &amp; Input</span>
+      </button>
+
+      <button class="nav-item" data-screen="playground" id="nav-playground" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('playground')">
+        <span class="nav-icon" aria-hidden="true">🎯</span>
+        <span>Contrast Playground</span>
       </button>
 
       <button class="nav-item" data-screen="findings" id="nav-findings" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('findings')">
@@ -58,7 +66,13 @@
 
       <button class="nav-item" data-screen="tokens" id="nav-tokens" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('tokens')">
         <span class="nav-icon" aria-hidden="true">🏷️</span>
-        <span>Design Tokens</span>
+        <span>Token Intelligence</span>
+      </button>
+
+      <button class="nav-item" data-screen="html-a11y" id="nav-html-a11y" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('html-a11y')">
+        <span class="nav-icon" aria-hidden="true">🛡️</span>
+        <span>HTML Accessibility</span>
+        <span id="nav-html-fail-count" class="nav-badge" style="display: none;">0</span>
       </button>
 
       <button class="nav-item" data-screen="sessions" id="nav-sessions" onclick="window.ContrastCraft && window.ContrastCraft.switchScreen('sessions')">
@@ -70,8 +84,8 @@
     <!-- Main Workspace Content Area -->
     <main class="app-content" role="main">
 
-      <!-- Overall Session Statistics Bar -->
-      <section class="stats-overview" aria-label="Audit summary statistics">
+      <!-- Overall Session Statistics Bar (Visible across key audit screens) -->
+      <section id="global-stats-overview" class="stats-overview" aria-label="Audit summary statistics">
         <div class="stat-box">
           <div class="stat-header">
             <span class="stat-title">Compliance Score</span>
@@ -115,7 +129,7 @@
 
         <div class="stat-box">
           <div class="stat-header">
-            <span class="stat-title">Needs Verification</span>
+            <span class="stat-title">Needs Review</span>
           </div>
           <div id="stat-unresolved" class="stat-value" style="color: var(--cc-warn-text);">0</div>
           <div class="stat-subtitle">Gradients &amp; dynamic</div>
@@ -153,20 +167,45 @@
               </div>
               <div class="form-group">
                 <label for="input-css" class="form-label">CSS Stylesheet Declarations &amp; Custom Properties</label>
-                <textarea id="input-css" class="code-editor" placeholder=":root {&#10;  --primary: #0284C7;&#10;  --text-muted: #94A3B8;&#10;}&#10;.banner { background: #FFFFFF; }"></textarea>
+                <textarea id="input-css" class="code-editor" placeholder=":root {&#10;  --primary: #0D9488;&#10;  --text-muted: #94A3B8;&#10;}&#10;.banner { background: #FFFFFF; }"></textarea>
               </div>
             </div>
           </div>
 
-          <!-- Tab Pane: Upload -->
+          <!-- Tab Pane: Upload (Enhanced Multi-File Queue) -->
           <div id="tab-pane-upload" class="input-tab-pane" style="display: none;">
             <div id="file-dropzone" class="dropzone" role="button" tabindex="0">
-              <div style="font-size:2.5rem;margin-bottom:12px;">📄</div>
-              <h3 style="margin:0 0 6px 0;font-size:1.1rem;">Click to upload or drag &amp; drop HTML and CSS files</h3>
-              <p style="color:var(--cc-text-muted);font-size:0.85rem;margin:0;">Supports .html, .htm, and .css files up to 5MB.</p>
+              <div style="font-size:2.2rem;margin-bottom:8px;">📄</div>
+              <h3 style="margin:0 0 6px 0;font-size:1.05rem;">Click to upload or drag &amp; drop HTML and CSS files</h3>
+              <p style="color:var(--cc-text-muted);font-size:0.85rem;margin:0;">Supports multiple .html, .htm, and .css files up to 5MB.</p>
               <input type="file" id="file-input" multiple accept=".html,.htm,.css" style="display:none;">
             </div>
-            <div id="upload-file-summary" style="margin-top:12px;font-size:0.85rem;color:var(--cc-text-muted);"></div>
+
+            <!-- Upload File Queue -->
+            <div id="upload-queue-container" style="margin-top:16px;display:none;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong style="font-size:0.88rem;">Selected Files Queue (<span id="queue-count">0</span>)</strong>
+                <button id="btn-clear-queue" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:2px 8px;">Clear Queue</button>
+              </div>
+              <div class="table-wrapper">
+                <table class="file-queue-table">
+                  <thead>
+                    <tr>
+                      <th>Filename</th>
+                      <th>Type</th>
+                      <th>Size</th>
+                      <th style="text-align:right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="file-queue-tbody"></tbody>
+                </table>
+              </div>
+              <div style="margin-top:12px;text-align:right;">
+                <button id="btn-analyze-queue" class="btn btn-primary btn-sm">
+                  <span>⚡</span> Analyze Queued Files
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Tab Pane: Local Folder Scanner -->
@@ -174,22 +213,176 @@
             <div class="form-group">
               <label for="input-folder-path" class="form-label">Local Project Folder Path</label>
               <input type="text" id="input-folder-path" class="form-input" placeholder="e.g. D:\my-web-project or .\examples">
-              <div style="font-size:0.75rem;color:var(--cc-text-muted);margin-top:4px;">
-                Restricted to the selected folder. Excludes node_modules, .git, dist, build, and .venv by default.
+              <div style="font-size:0.75rem;color:var(--cc-text-muted);margin-top:6px;">
+                Restricted to the selected folder. Excludes: <code>node_modules</code>, <code>.git</code>, <code>dist</code>, <code>build</code>, <code>.venv</code>.
               </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:10px;">
+              <button id="btn-scan-folder" class="btn btn-primary btn-sm">
+                <span>📁</span> Scan Local Directory
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- SCREEN 2: AUDIT FINDINGS -->
+      <!-- SCREEN 2: VISUAL CONTRAST PLAYGROUND (NEW) -->
+      <section id="screen-playground" class="screen-panel" aria-labelledby="heading-playground">
+        <div class="playground-layout">
+          
+          <!-- Left Column: Color Controls & Metrics -->
+          <div>
+            <!-- Foreground Color Control -->
+            <div class="playground-color-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <label style="font-weight:700;font-size:0.88rem;">Foreground (Text / Icon)</label>
+                <span id="pg-fg-sample-badge" class="badge badge-pill badge-info" style="font-size:0.72rem;">Text</span>
+              </div>
+              <div class="color-input-grid">
+                <input type="color" id="pg-fg-picker" value="#191C1E" style="width:44px;height:38px;padding:2px;border:1px solid var(--cc-border);border-radius:var(--cc-radius-md);cursor:pointer;" aria-label="Foreground color picker">
+                <input type="text" id="pg-fg-hex" class="form-input" value="#191C1E" placeholder="#HEX" style="font-family:var(--cc-font-mono);font-size:0.85rem;" aria-label="Foreground HEX">
+                <input type="text" id="pg-fg-rgb" class="form-input" value="25, 28, 30" placeholder="R, G, B" style="font-family:var(--cc-font-mono);font-size:0.8rem;" aria-label="Foreground RGB">
+                <input type="text" id="pg-fg-hsl" class="form-input" value="204, 9%, 11%" placeholder="H, S%, L%" style="font-family:var(--cc-font-mono);font-size:0.8rem;" aria-label="Foreground HSL">
+              </div>
+            </div>
+
+            <!-- Background Color Control -->
+            <div class="playground-color-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <label style="font-weight:700;font-size:0.88rem;">Background (Surface / Container)</label>
+                <span id="pg-bg-sample-badge" class="badge badge-pill badge-info" style="font-size:0.72rem;">Canvas</span>
+              </div>
+              <div class="color-input-grid">
+                <input type="color" id="pg-bg-picker" value="#FFFFFF" style="width:44px;height:38px;padding:2px;border:1px solid var(--cc-border);border-radius:var(--cc-radius-md);cursor:pointer;" aria-label="Background color picker">
+                <input type="text" id="pg-bg-hex" class="form-input" value="#FFFFFF" placeholder="#HEX" style="font-family:var(--cc-font-mono);font-size:0.85rem;" aria-label="Background HEX">
+                <input type="text" id="pg-bg-rgb" class="form-input" value="255, 255, 255" placeholder="R, G, B" style="font-family:var(--cc-font-mono);font-size:0.8rem;" aria-label="Background RGB">
+                <input type="text" id="pg-bg-hsl" class="form-input" value="0, 0%, 100%" placeholder="H, S%, L%" style="font-family:var(--cc-font-mono);font-size:0.8rem;" aria-label="Background HSL">
+              </div>
+            </div>
+
+            <!-- Action Controls & Presets -->
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+              <button id="btn-pg-invert" class="btn btn-secondary btn-sm" style="flex:1;" title="Swap Foreground and Background">
+                <span>⇄</span> Invert Colors
+              </button>
+              <button id="btn-pg-reset" class="btn btn-secondary btn-sm" style="flex:1;" title="Reset to Editorial Default">
+                <span>↺</span> Reset Defaults
+              </button>
+            </div>
+
+            <!-- Preset Palettes -->
+            <div style="margin-bottom:16px;">
+              <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--cc-text-muted);margin-bottom:6px;">Sample Color Pairings</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm btn-pg-preset" data-fg="#191C1E" data-bg="#FFFFFF">Dark Ink / White</button>
+                <button class="btn btn-secondary btn-sm btn-pg-preset" data-fg="#2DD4BF" data-bg="#111615">Teal / Charcoal</button>
+                <button class="btn btn-secondary btn-sm btn-pg-preset" data-fg="#0D9488" data-bg="#F4F3EE">Teal / Warm Off-white</button>
+                <button class="btn btn-secondary btn-sm btn-pg-preset" data-fg="#94A3B8" data-bg="#FFFFFF">Muted Gray (Fail)</button>
+              </div>
+            </div>
+
+            <!-- Metric Hero -->
+            <div class="playground-metric-hero">
+              <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--cc-text-muted);font-weight:700;">Calculated Contrast Ratio</div>
+              <div id="pg-ratio-val" class="playground-ratio-number" style="color:var(--cc-primary);">15.82:1</div>
+              <div id="pg-apca-val" style="font-size:0.85rem;font-family:var(--cc-font-mono);color:var(--cc-text-secondary);font-weight:600;">APCA Lc 106.4 • Excellent Readability</div>
+            </div>
+
+            <!-- WCAG Badges -->
+            <div class="playground-badges-grid">
+              <div class="playground-badge-item">
+                <span class="playground-badge-title">Normal Text AA</span>
+                <span id="badge-pg-normal-aa" class="playground-badge-status badge badge-pass">PASS (&ge;4.5)</span>
+              </div>
+              <div class="playground-badge-item">
+                <span class="playground-badge-title">Normal Text AAA</span>
+                <span id="badge-pg-normal-aaa" class="playground-badge-status badge badge-pass">PASS (&ge;7.0)</span>
+              </div>
+              <div class="playground-badge-item">
+                <span class="playground-badge-title">Large Text AA</span>
+                <span id="badge-pg-large-aa" class="playground-badge-status badge badge-pass">PASS (&ge;3.0)</span>
+              </div>
+              <div class="playground-badge-item">
+                <span class="playground-badge-title">Large Text AAA</span>
+                <span id="badge-pg-large-aaa" class="playground-badge-status badge badge-pass">PASS (&ge;4.5)</span>
+              </div>
+              <div class="playground-badge-item">
+                <span class="playground-badge-title">UI Boundary AA</span>
+                <span id="badge-pg-ui-aa" class="playground-badge-status badge badge-pass">PASS (&ge;3.0)</span>
+              </div>
+            </div>
+
+            <!-- Copy CSS -->
+            <div style="margin-top:16px;">
+              <button id="btn-pg-copy-css" class="btn btn-primary" style="width:100%;">
+                <span>📋</span> Copy CSS Color Rule
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: Interactive Real-World Component Preview Board -->
+          <div class="playground-preview-board">
+            <div class="preview-board-header">
+              <strong style="font-size:0.88rem;">Live Component Rendering Canvas</strong>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-secondary btn-sm btn-pg-canvas-theme active" data-canvas="custom" title="View with custom background">Custom BG</button>
+                <button class="btn btn-secondary btn-sm btn-pg-canvas-theme" data-canvas="light" title="View on white background">Light Canvas</button>
+                <button class="btn btn-secondary btn-sm btn-pg-canvas-theme" data-canvas="dark" title="View on dark background">Dark Canvas</button>
+              </div>
+            </div>
+
+            <div id="pg-canvas" class="preview-board-canvas" style="background-color: #FFFFFF;">
+              
+              <!-- Regular Body Text Sample -->
+              <div style="padding:16px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background-color:inherit;">
+                <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;opacity:0.7;">Normal Body Text (16px)</div>
+                <p id="pg-sample-body-reg" style="margin:0 0 8px 0;font-size:16px;line-height:1.5;">
+                  Web content accessibility guidelines require regular text to maintain at least a 4.5:1 contrast ratio against its effective background.
+                </p>
+                <p id="pg-sample-body-bold" style="margin:0;font-size:16px;font-weight:700;line-height:1.5;">
+                  Bold weight 16px text ensures high legibility for key emphasis phrases and data labels.
+                </p>
+              </div>
+
+              <!-- Large Heading Text Sample -->
+              <div style="padding:16px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background-color:inherit;">
+                <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;opacity:0.7;">Large Scale Text (&ge;24px Regular or &ge;19px Bold)</div>
+                <h2 id="pg-sample-heading-reg" style="margin:0 0 6px 0;font-size:24px;font-weight:400;line-height:1.2;">
+                  Primary Section Headline (24px Regular)
+                </h2>
+                <h3 id="pg-sample-heading-bold" style="margin:0;font-size:19px;font-weight:700;line-height:1.3;">
+                  Subsection Headline (19px Bold — Qualifies as Large Text)
+                </h3>
+              </div>
+
+              <!-- Interactive Button & Form Component Sample -->
+              <div style="padding:16px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background-color:inherit;">
+                <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;opacity:0.7;">Interactive Components &amp; Controls</div>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                  <button id="pg-sample-button" style="padding:10px 20px;border-radius:6px;font-weight:600;font-size:15px;cursor:pointer;border:1px solid transparent;transition:all 0.15s ease;">
+                    Action Button
+                  </button>
+                  <input id="pg-sample-input" type="text" value="Form Input Sample" style="padding:9px 14px;border-radius:6px;font-size:14px;outline:none;" aria-label="Sample interactive input">
+                  <span id="pg-sample-badge" style="padding:6px 12px;border-radius:9999px;font-size:12px;font-weight:700;">
+                    Status Badge
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SCREEN 3: AUDIT FINDINGS -->
       <section id="screen-findings" class="screen-panel" aria-labelledby="heading-findings">
         <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;">
           
           <!-- Findings Table Column -->
           <div class="card" style="margin-bottom:0;">
             <div class="card-header" style="flex-wrap:wrap;gap:12px;">
-              <h2 id="heading-findings" class="card-title">WCAG Audit Findings</h2>
+              <h2 id="heading-findings" class="card-title">WCAG Contrast Findings</h2>
               
               <!-- Search & Filters -->
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -201,6 +394,10 @@
                   <option value="ratio_desc">Ratio: Highest First</option>
                   <option value="line">Line Number</option>
                 </select>
+
+                <button id="btn-export-findings-csv" class="btn btn-secondary btn-sm" title="Export current findings view as CSV">
+                  <span>📄</span> CSV Export
+                </button>
               </div>
             </div>
 
@@ -211,7 +408,7 @@
               <button class="btn btn-secondary btn-sm filter-pill" data-filter="pass_aa">AA Passes</button>
               <button class="btn btn-secondary btn-sm filter-pill" data-filter="fail_aaa">AAA Failures</button>
               <button class="btn btn-secondary btn-sm filter-pill" data-filter="fail_non_text">UI Boundary Failures</button>
-              <button class="btn btn-secondary btn-sm filter-pill" data-filter="verify">Needs Verification</button>
+              <button class="btn btn-secondary btn-sm filter-pill" data-filter="verify">Needs Review</button>
             </div>
 
             <div class="table-wrapper">
@@ -252,7 +449,7 @@
         </div>
       </section>
 
-      <!-- SCREEN 3: FIX STUDIO & PREVIEW -->
+      <!-- SCREEN 4: FIX STUDIO & PREVIEW -->
       <section id="screen-fix-studio" class="screen-panel" aria-labelledby="heading-fix-studio">
         <!-- Target Banner -->
         <div class="card" style="margin-bottom:16px;background:var(--cc-surface-subtle);padding:14px 20px;">
@@ -438,13 +635,16 @@
               </div>
             </div>
 
-            <!-- CSS Patch Diff Preview -->
+            <!-- CSS Patch Diff Preview & Actions -->
             <div class="card">
               <div class="card-header">
                 <h3 class="card-title" style="font-size:1rem;">Targeted CSS Patch Diff</h3>
                 <div style="display:flex;gap:6px;">
                   <button id="btn-export-patch-file" class="btn btn-secondary btn-sm" title="Download .diff patch file">
                     <span>💾</span> Export .diff
+                  </button>
+                  <button id="btn-revert-patch" class="btn btn-secondary btn-sm" title="Revert last patch from .bak backup">
+                    <span>↺</span> Revert Last Patch
                   </button>
                   <button id="btn-apply-patch" class="btn btn-primary btn-sm" title="Apply to working copy with explicit approval">
                     <span>✨</span> Apply Patch
@@ -510,41 +710,167 @@
                 </div>
               </div>
 
-              <!-- Hidden backwards compatibility iframe -->
+              <!-- Fallback preview iframe -->
               <iframe id="preview-iframe" style="display:none;" sandbox="allow-same-origin allow-scripts" title="Preview iframe fallback"></iframe>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- SCREEN 4: DESIGN TOKENS INVENTORY -->
+      <!-- SCREEN 5: DESIGN TOKENS INTELLIGENCE & MATRIX (EXPANDED) -->
       <section id="screen-tokens" class="screen-panel" aria-labelledby="heading-tokens">
         <div class="card">
           <div class="card-header">
             <div>
-              <h2 id="heading-tokens" class="card-title">CSS Design Token &amp; Custom Property Inventory</h2>
+              <h2 id="heading-tokens" class="card-title">Design Token Intelligence &amp; Compatibility Matrix</h2>
               <div style="font-size:0.8rem;color:var(--cc-text-muted);margin-top:2px;">
-                Audits design variables, usage frequency, associated contrast failures, and suggested token-level updates.
+                Pairwise contrast matrices, duplicate token detection, usage audits, and token change impact simulation.
               </div>
             </div>
           </div>
 
+          <!-- Token Subtabs -->
+          <div class="tab-nav" role="tablist">
+            <button class="tab-btn token-subtab-btn active" data-subtab="inventory" role="tab">Token Inventory &amp; Frequency</button>
+            <button class="tab-btn token-subtab-btn" data-subtab="matrix" role="tab">Pairwise Compatibility Matrix</button>
+            <button class="tab-btn token-subtab-btn" data-subtab="duplicates" role="tab">Duplicate Token Audit</button>
+            <button class="tab-btn token-subtab-btn" data-subtab="impact" role="tab">Token Impact Simulator</button>
+          </div>
+
+          <!-- Subtab 1: Inventory Table -->
+          <div id="token-pane-inventory" class="token-subtab-pane">
+            <div class="table-wrapper">
+              <table class="cc-table" aria-label="Design tokens table">
+                <thead>
+                  <tr>
+                    <th>Token Name</th>
+                    <th>Declared Value</th>
+                    <th>Resolved Swatch</th>
+                    <th>Usage Count</th>
+                    <th>Contrast Failures</th>
+                    <th>Proposed Token Value</th>
+                  </tr>
+                </thead>
+                <tbody id="tokens-tbody">
+                  <tr>
+                    <td colspan="6" style="text-align:center;padding:24px;color:var(--cc-text-muted);">
+                      No audit active. Load a project or sample to inventory CSS custom properties.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Subtab 2: Pairwise Compatibility Matrix -->
+          <div id="token-pane-matrix" class="token-subtab-pane" style="display:none;">
+            <div style="font-size:0.85rem;color:var(--cc-text-muted);margin-bottom:12px;">
+              Evaluates contrast across all token pairs (Foreground rows &times; Background columns). Hover or click cells to test combinations.
+            </div>
+            <div id="token-matrix-container" class="token-matrix-wrapper">
+              <div style="text-align:center;padding:24px;color:var(--cc-text-muted);">No tokens found in current audit.</div>
+            </div>
+          </div>
+
+          <!-- Subtab 3: Duplicate Tokens -->
+          <div id="token-pane-duplicates" class="token-subtab-pane" style="display:none;">
+            <div style="font-size:0.85rem;color:var(--cc-text-muted);margin-bottom:12px;">
+              Identifies tokens sharing identical color values that may cause accidental inconsistencies or design token drift.
+            </div>
+            <div id="token-duplicates-container">
+              <div style="text-align:center;padding:24px;color:var(--cc-text-muted);">No duplicate color tokens detected.</div>
+            </div>
+          </div>
+
+          <!-- Subtab 4: Token Impact Simulator -->
+          <div id="token-pane-impact" class="token-subtab-pane" style="display:none;">
+            <div class="card" style="margin-bottom:0;background:var(--cc-surface-subtle);">
+              <h3 style="font-size:0.95rem;margin:0 0 10px 0;">Simulate Downstream Cascade of a Token Change</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;">
+                <div>
+                  <label for="impact-token-select" class="form-label">Select CSS Token to Modify</label>
+                  <select id="impact-token-select" class="form-input">
+                    <option value="">-- Choose Token --</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="impact-new-color" class="form-label">Proposed New Color Value</label>
+                  <input type="text" id="impact-new-color" class="form-input" placeholder="#0F172A or #0D9488">
+                </div>
+                <div>
+                  <button id="btn-eval-token-impact" class="btn btn-primary">
+                    <span>⚡</span> Calculate Impact
+                  </button>
+                </div>
+              </div>
+              <div id="token-impact-result" style="margin-top:16px;"></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SCREEN 6: EXTENDED HTML ACCESSIBILITY AUDIT (NEW) -->
+      <section id="screen-html-a11y" class="screen-panel" aria-labelledby="heading-html-a11y">
+        <div class="card">
+          <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+            <div>
+              <h2 id="heading-html-a11y" class="card-title">Extended HTML Structural Accessibility Audit</h2>
+              <div style="font-size:0.8rem;color:var(--cc-text-muted);margin-top:2px;">
+                Evaluates images (1.1.1), form labels (1.3.1), links (2.4.4), heading hierarchy (1.3.1), language (3.1.1), button names (4.1.2), and focus indicators (2.4.7).
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <select id="html-a11y-filter" class="form-input" style="width:200px;font-size:0.85rem;padding:6px 10px;">
+                <option value="all">All Structural Issues</option>
+                <option value="img">Images Missing / Redundant Alt</option>
+                <option value="form">Form Controls Missing Labels</option>
+                <option value="link">Empty / Generic Link Text</option>
+                <option value="heading">Heading Hierarchy Skips</option>
+                <option value="focus">Focus Outline Suppression</option>
+                <option value="lang">Missing Document Language</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- HTML A11y Summary Cards -->
+          <div class="a11y-summary-bar">
+            <div class="a11y-stat-card">
+              <div style="font-size:0.75rem;font-weight:700;color:var(--cc-text-muted);text-transform:uppercase;">Total HTML Issues</div>
+              <div id="html-stat-total" style="font-size:1.6rem;font-weight:800;color:var(--cc-text-primary);">0</div>
+            </div>
+            <div class="a11y-stat-card">
+              <div style="font-size:0.75rem;font-weight:700;color:var(--cc-text-muted);text-transform:uppercase;">Critical Violations</div>
+              <div id="html-stat-critical" style="font-size:1.6rem;font-weight:800;color:var(--cc-fail-text);">0</div>
+            </div>
+            <div class="a11y-stat-card">
+              <div style="font-size:0.75rem;font-weight:700;color:var(--cc-text-muted);text-transform:uppercase;">Static Verified</div>
+              <div id="html-stat-verified" style="font-size:1.6rem;font-weight:800;color:var(--cc-primary);">0</div>
+            </div>
+            <div class="a11y-stat-card">
+              <div style="font-size:0.75rem;font-weight:700;color:var(--cc-text-muted);text-transform:uppercase;">Needs Manual Review</div>
+              <div id="html-stat-review" style="font-size:1.6rem;font-weight:800;color:var(--cc-warn-text);">0</div>
+            </div>
+          </div>
+
+          <!-- HTML Findings Table -->
           <div class="table-wrapper">
-            <table class="cc-table" aria-label="Design tokens table">
+            <table class="cc-table" aria-label="HTML structural accessibility issues">
               <thead>
                 <tr>
-                  <th>Token Name</th>
-                  <th>Declared Value</th>
-                  <th>Resolved Swatch</th>
-                  <th>Usage Count</th>
-                  <th>Contrast Failures</th>
-                  <th>Proposed Token Value</th>
+                  <th>Severity</th>
+                  <th>WCAG SC</th>
+                  <th>Element / Line</th>
+                  <th>Description</th>
+                  <th>Code Snippet</th>
+                  <th>Remediation Fix</th>
+                  <th>Confidence</th>
                 </tr>
               </thead>
-              <tbody id="tokens-tbody">
+              <tbody id="html-a11y-tbody">
                 <tr>
-                  <td colspan="6" style="text-align:center;padding:24px;color:var(--cc-text-muted);">
-                    No audit active. Load a project or sample to inventory CSS custom properties.
+                  <td colspan="7" style="text-align:center;padding:32px;color:var(--cc-text-muted);">
+                    No active audit. Run an audit from the Workspace screen to evaluate structural HTML accessibility.
                   </td>
                 </tr>
               </tbody>
@@ -553,19 +879,22 @@
         </div>
       </section>
 
-      <!-- SCREEN 5: SESSIONS & REPORTS -->
+      <!-- SCREEN 7: SESSIONS & REPORTS -->
       <section id="screen-sessions" class="screen-panel" aria-labelledby="heading-sessions">
         <!-- Export Actions Banner -->
         <div class="card" style="margin-bottom:20px;">
           <div class="card-header">
             <h2 id="heading-sessions" class="card-title">Reports &amp; Data Export</h2>
           </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button id="btn-save-session-trigger" class="btn btn-primary">
               <span>💾</span> Save Current Audit Session
             </button>
             <button id="btn-export-html" class="btn btn-secondary">
               <span>📑</span> Download Standalone HTML Report
+            </button>
+            <button id="btn-export-csv" class="btn btn-secondary">
+              <span>📄</span> Download CSV Audit Log
             </button>
             <button id="btn-export-json" class="btn btn-secondary">
               <span>📦</span> Download JSON Audit Data
@@ -602,7 +931,7 @@
           You are about to apply the proposed CSS patch to your working copy.
         </p>
         <div class="badge badge-warn" style="display:block;padding:10px;margin-bottom:14px;line-height:1.4;">
-          ⚠️ <strong>Non-destructive Guarantee:</strong> ContrastCraft never overwrites unrelated CSS rules. A re-analysis will be automatically executed to measure and verify contrast improvements.
+          ⚠️ <strong>Non-destructive Guarantee:</strong> ContrastCraft creates a <code>.bak</code> timestamped backup before touching files. You can safely revert anytime using the Revert button.
         </div>
         <p style="font-size:0.85rem;color:var(--cc-text-muted);">
           Do you authorize applying these changes to your working copy?
@@ -630,10 +959,12 @@
           <tbody>
             <tr><td><code>Alt + A</code></td><td>Run Accessibility Audit</td></tr>
             <tr><td><code>Alt + 1</code></td><td>Switch to Workspace &amp; Input</td></tr>
-            <tr><td><code>Alt + 2</code></td><td>Switch to Audit Findings</td></tr>
-            <tr><td><code>Alt + 3</code></td><td>Switch to Fix Studio &amp; Preview</td></tr>
-            <tr><td><code>Alt + 4</code></td><td>Switch to Design Tokens</td></tr>
-            <tr><td><code>Alt + 5</code></td><td>Switch to Sessions &amp; Reports</td></tr>
+            <tr><td><code>Alt + 2</code></td><td>Switch to Contrast Playground</td></tr>
+            <tr><td><code>Alt + 3</code></td><td>Switch to Audit Findings</td></tr>
+            <tr><td><code>Alt + 4</code></td><td>Switch to Fix Studio &amp; Preview</td></tr>
+            <tr><td><code>Alt + 5</code></td><td>Switch to Token Intelligence</td></tr>
+            <tr><td><code>Alt + 6</code></td><td>Switch to HTML Accessibility</td></tr>
+            <tr><td><code>Alt + 7</code></td><td>Switch to Sessions &amp; Reports</td></tr>
             <tr><td><code>Alt + T</code></td><td>Toggle Dark / Light Theme</td></tr>
             <tr><td><code>Alt + S</code></td><td>Focus Search Input</td></tr>
             <tr><td><code>Escape</code></td><td>Dismiss Dialogs / Close Inspector</td></tr>
@@ -647,6 +978,27 @@
     </div>
   </div>
 
-  <script src="js/app.bundle.js?v=1.0.4"></script>
+  <!-- MODAL: Custom Prompt / Input Dialog (Replaces native prompt) -->
+  <div id="prompt-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="prompt-modal-title">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 id="prompt-modal-title" class="modal-title">Input</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="prompt-modal-msg" style="font-size:0.9rem;margin-bottom:12px;"></p>
+        <input type="text" id="prompt-modal-input" class="form-input" style="width:100%;">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close-btn">Cancel</button>
+        <button id="btn-prompt-modal-ok" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="cc-toast-container" class="cc-toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="js/app.bundle.js?v=2.0.0"></script>
 </body>
 </html>

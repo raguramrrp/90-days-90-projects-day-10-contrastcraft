@@ -142,3 +142,32 @@ def apply_patch_safely(
             "success": False,
             "error": f"Failed to apply patch: {str(e)}"
         }
+
+
+def revert_patch_safely(file_path: Path) -> Dict[str, Any]:
+    """
+    Restores the .bak backup file to original file_path.
+    """
+    backup_path = file_path.with_suffix(file_path.suffix + ".bak")
+    if not backup_path.exists():
+        return {
+            "success": False,
+            "error": f"No backup file (.bak) found for {file_path.name}"
+        }
+
+    try:
+        content = backup_path.read_text(encoding="utf-8", errors="replace")
+        file_path.write_text(content, encoding="utf-8")
+        backup_path.unlink()  # Clean up backup after restoration
+        return {
+            "success": True,
+            "file": str(file_path),
+            "reverted": True,
+            "content": content
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to revert patch: {str(e)}"
+        }
+

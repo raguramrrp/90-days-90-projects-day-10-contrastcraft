@@ -7,6 +7,7 @@ import pytest
 from backend.app.core.reporter import (
     generate_json_report,
     generate_html_report,
+    generate_csv_report,
     export_corrected_css
 )
 
@@ -79,3 +80,39 @@ def test_corrected_css_export():
     assert ".footer-note {" in css_res
     assert "color: #475569;" in css_res
     assert "5.20:1" in css_res
+
+
+def test_csv_report_generation():
+    sample_audit = {
+        "findings": [
+            {
+                "id": "cc-1",
+                "selector": ".hero-caption",
+                "element_role": "text",
+                "line_number": 15,
+                "text_sample": "Subtitle sample",
+                "effective_fg": "#94A3B8",
+                "effective_bg": "#FFFFFF",
+                "contrast_ratio": 2.60,
+                "target_threshold": 4.5,
+                "pass_aa": False,
+                "pass_aaa": False,
+                "criterion_id": "1.4.3",
+                "severity": "high",
+                "confidence": "verified",
+                "explanation": "Contrast failure",
+                "suggested_fix": {
+                    "suggested_hex": "#596A82",
+                    "formatted_projected_ratio": "4.62:1"
+                }
+            }
+        ]
+    }
+    csv_output = generate_csv_report(sample_audit)
+    lines = csv_output.strip().splitlines()
+    assert len(lines) == 2  # Header + 1 row
+    assert "Finding ID,Selector,Element Role" in lines[0]
+    assert "cc-1,.hero-caption,text,15" in lines[1]
+    assert "#94A3B8,#FFFFFF,2.6,4.5,FAIL,FAIL" in lines[1]
+    assert "#596A82,4.62:1" in lines[1]
+

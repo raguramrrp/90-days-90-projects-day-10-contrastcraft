@@ -17,6 +17,8 @@ set PYTHONPATH=%~dp0
 
 if exist .\.venv\Scripts\pytest.exe (
     .\.venv\Scripts\pytest.exe backend\tests -v
+) else if exist .\.venv\Scripts\python.exe (
+    .\.venv\Scripts\python.exe -m pytest backend\tests -v
 ) else (
     python -m pytest backend\tests -v
 )

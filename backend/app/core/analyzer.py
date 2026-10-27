@@ -14,6 +14,8 @@ from .classifier import classify_contrast, is_large_text_evaluation, Classificat
 from .html_parser import parse_html_document, DOMNode
 from .css_parser import CSSStylesheet, CascadeResolver
 from .recommender import find_hue_preserving_color
+from .html_a11y import HTMLA11yAuditor
+from .token_matrix import TokenIntelligenceEngine
 
 
 @dataclass
@@ -191,11 +193,21 @@ class AuditEngine:
         # 9. Compute summary metrics
         summary = self._compute_summary(deduped)
 
+        # 10. Extended HTML Accessibility Audit (Separate category)
+        html_auditor = HTMLA11yAuditor()
+        html_findings = html_auditor.audit(html_content, custom_css=custom_css)
+
+        # 11. Token Compatibility Matrix
+        token_engine = TokenIntelligenceEngine()
+        token_matrix_data = token_engine.build_matrix([asdict(t) for t in self.token_inventory.values()])
+
         return {
             "summary": asdict(summary),
             "findings": [asdict(f) for f in deduped],
             "tokens": [asdict(t) for t in self.token_inventory.values()],
-            "unresolved_elements_count": summary.needs_verification_count
+            "unresolved_elements_count": summary.needs_verification_count,
+            "html_a11y_findings": [asdict(hf) for hf in html_findings],
+            "token_matrix": token_matrix_data
         }
 
     def _audit_node(

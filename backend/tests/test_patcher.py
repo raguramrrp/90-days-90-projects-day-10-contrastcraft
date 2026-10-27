@@ -4,7 +4,11 @@ Unit tests for CSS Patch Generation and Safe File Application
 
 import pytest
 from pathlib import Path
-from backend.app.core.patcher import generate_css_patch, apply_patch_safely
+from backend.app.core.patcher import (
+    generate_css_patch,
+    apply_patch_safely,
+    revert_patch_safely
+)
 
 
 def test_targeted_css_patch_generation():

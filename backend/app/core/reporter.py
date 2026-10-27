@@ -5,8 +5,10 @@ and downloadable corrected CSS stylesheets.
 """
 
 from __future__ import annotations
+import csv
 import datetime
 import html
+import io
 import json
 from typing import Dict, List, Any
 
@@ -360,3 +362,56 @@ def export_corrected_css(findings: List[Dict[str, Any]], original_css: str = "")
         lines.extend(applied_rules)
 
     return "\n".join(lines)
+
+
+def generate_csv_report(audit_data: Dict[str, Any]) -> str:
+    """Generates RFC 4180 compliant CSV export of all audit findings."""
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+
+    # Header
+    writer.writerow([
+        "Finding ID",
+        "Selector",
+        "Element Role",
+        "Line Number",
+        "Text Sample",
+        "Effective FG",
+        "Effective BG",
+        "Contrast Ratio",
+        "Target Threshold",
+        "WCAG AA Status",
+        "WCAG AAA Status",
+        "WCAG Criterion",
+        "Severity",
+        "Confidence",
+        "Explanation",
+        "Proposed Fix Hex",
+        "Projected Ratio"
+    ])
+
+    findings = audit_data.get("findings", [])
+    for f in findings:
+        sugg = f.get("suggested_fix") or {}
+        writer.writerow([
+            f.get("id", ""),
+            f.get("selector", ""),
+            f.get("element_role", ""),
+            f.get("line_number", ""),
+            f.get("text_sample", ""),
+            f.get("effective_fg", ""),
+            f.get("effective_bg", ""),
+            f.get("contrast_ratio", ""),
+            f.get("target_threshold", ""),
+            "PASS" if f.get("pass_aa") else "FAIL",
+            "PASS" if f.get("pass_aaa") else "FAIL",
+            f.get("criterion_id", ""),
+            f.get("severity", ""),
+            f.get("confidence", ""),
+            f.get("explanation", ""),
+            sugg.get("suggested_hex", ""),
+            sugg.get("formatted_projected_ratio", "")
+        ])
+
+    return output.getvalue()
+

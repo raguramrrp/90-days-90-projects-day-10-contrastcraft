@@ -13,8 +13,10 @@ from pydantic import BaseModel, Field
 
 from ..core.analyzer import AuditEngine
 from ..core.recommender import generate_color_recommendations, PRESET_PALETTES
-from ..core.patcher import generate_css_patch, apply_patch_safely
-from ..core.reporter import generate_json_report, generate_html_report, export_corrected_css
+from ..core.patcher import generate_css_patch, apply_patch_safely, revert_patch_safely
+from ..core.reporter import generate_json_report, generate_html_report, generate_csv_report, export_corrected_css
+from ..core.html_a11y import HTMLA11yAuditor
+from ..core.token_matrix import TokenIntelligenceEngine
 from ..database.session_store import SessionStore
 
 router = APIRouter(prefix="/api")
@@ -55,6 +57,22 @@ class PatchApplyRequest(BaseModel):
     file_path: str = Field(..., max_length=1000)
     patched_content: str = Field(..., max_length=5_000_000)
     explicit_approval: bool = Field(default=False)
+
+
+class PatchRevertRequest(BaseModel):
+    file_path: str = Field(..., max_length=1000)
+
+
+class TokenImpactRequest(BaseModel):
+    token_name: str = Field(..., max_length=100)
+    proposed_value: str = Field(..., max_length=100)
+    findings: List[Dict[str, Any]]
+    tokens: List[Dict[str, Any]]
+
+
+class HTMLA11yRequest(BaseModel):
+    html: str = Field(..., max_length=5_000_000)
+    css: Optional[str] = Field(default="", max_length=5_000_000)
 
 
 class SessionSaveRequest(BaseModel):
@@ -208,6 +226,34 @@ def apply_patch(req: PatchApplyRequest):
     return result
 
 
+@router.post("/patch/revert")
+def revert_patch(req: PatchRevertRequest):
+    p = Path(req.file_path).resolve()
+    result = revert_patch_safely(file_path=p)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to revert patch."))
+    return result
+
+
+@router.post("/tokens/impact")
+def evaluate_token_impact(req: TokenImpactRequest):
+    engine = TokenIntelligenceEngine()
+    return engine.evaluate_token_impact(
+        token_name=req.token_name,
+        proposed_value=req.proposed_value,
+        findings=req.findings,
+        tokens=req.tokens
+    )
+
+
+@router.post("/audit-html-a11y")
+def audit_html_a11y(req: HTMLA11yRequest):
+    auditor = HTMLA11yAuditor()
+    findings = auditor.audit(req.html, custom_css=req.css or "")
+    from dataclasses import asdict
+    return {"findings": [asdict(f) for f in findings], "total": len(findings)}
+
+
 @router.post("/reports/json")
 def download_json_report(data: Dict[str, Any]):
     name = data.get("session_name", "ContrastCraft-Audit")
@@ -227,6 +273,16 @@ def download_html_report(data: Dict[str, Any]):
         content=html_str,
         media_type="text/html",
         headers={"Content-Disposition": f'attachment; filename="contrastcraft-report.html"'}
+    )
+
+
+@router.post("/reports/csv")
+def download_csv_report(data: Dict[str, Any]):
+    csv_str = generate_csv_report(data)
+    return Response(
+        content=csv_str,
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="contrastcraft-findings.csv"'}
     )
 
 
